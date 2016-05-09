@@ -14,7 +14,7 @@
 #define fequal(a,b) (fabs((a) - (b)) < FLT_EPSILON)
 #define fequalzero(a) (fabs(a) < FLT_EPSILON)
 
-#define DebugSZPullToRefresh
+//#define DebugSZPullToRefresh
 
 #ifdef DebugSZPullToRefresh
 #define CLog(fmt, ...) NSLog((@" %d %s " fmt), __LINE__, __PRETTY_FUNCTION__,  ##__VA_ARGS__)
