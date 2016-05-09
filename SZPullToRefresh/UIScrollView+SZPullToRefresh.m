@@ -30,9 +30,9 @@ static CGFloat const SZPullToRefershAnimationDuration = 0.3;
 
 @property (nonatomic, copy) void (^pullToRefreshActionHandler)(void);
 
+@property (nonatomic, strong) UIActivityIndicatorView *activityIndicatorView;
 @property (nonatomic, strong) CAShapeLayer *progressLayer;
 
-@property (nonatomic, strong) UIActivityIndicatorView *activityIndicatorView;
 @property (nonatomic, readwrite) SZPullToRefreshState state;
 @property (nonatomic, readwrite) SZPullToRefreshPosition position;
 
@@ -109,7 +109,7 @@ static char SZScrollViewBottomRefreshView;
     return [self addPullToRefreshWithActionHandler:actionHandler position:SZPullToRefreshPositionBottom];
 }
 
-- (void)addExternalTopInset:(CGFloat)externalTopInset {
+- (void)setExternalTopInset:(CGFloat)externalTopInset {
     if (self.topRefreshView) {
         self.topRefreshView.externalTopInset = externalTopInset;
     }
@@ -163,8 +163,9 @@ static char SZScrollViewBottomRefreshView;
 - (id)initWithFrame:(CGRect)frame {
     if(self = [super initWithFrame:frame]) {
         self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        self.tintColor = [UIColor grayColor];
         
-        self.activityIndicatorView.color = [UIColor grayColor];
+        self.activityIndicatorView.color = self.tintColor;
         self.state = SZPullToRefreshStateStopped;
         
         CGRect activityIndicatorFrame = self.activityIndicatorView.frame;
@@ -343,7 +344,7 @@ static char SZScrollViewBottomRefreshView;
         _progressLayer.frame = CGRectMake(0, 0, length, length);
         UIBezierPath *bezier = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, length, length) cornerRadius:length/2];
         _progressLayer.path = bezier.CGPath;
-        _progressLayer.strokeColor = [UIColor grayColor].CGColor;
+        _progressLayer.strokeColor = self.tintColor.CGColor;
         _progressLayer.fillColor = [UIColor clearColor].CGColor;
         _progressLayer.lineCap = kCALineJoinRound;
         _progressLayer.lineJoin = kCALineJoinRound;
@@ -405,6 +406,13 @@ static char SZScrollViewBottomRefreshView;
             break;
         }
     }
+}
+
+- (void)setTintColor:(UIColor *)tintColor {
+    [super setTintColor:tintColor];
+    
+    _activityIndicatorView.color = tintColor;
+    _progressLayer.strokeColor = tintColor.CGColor;
 }
 
 #pragma mark - Add/Remove Observers -

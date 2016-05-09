@@ -25,7 +25,7 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshPosition) {
 - (SZPullToRefreshView *)addTopRefreshWithActionHandler:(void (^)(void))actionHandler;
 - (SZPullToRefreshView *)addBottomRefreshWithActionHandler:(void (^)(void))actionHandler;
 
-- (void)addExternalTopInset:(CGFloat)externalTopInset;
+- (void)setExternalTopInset:(CGFloat)externalTopInset;
 
 - (void)triggerTopPullToRefresh;
 - (void)triggerBottomPullToRefresh;
@@ -41,8 +41,6 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshState) {
 };
 
 @interface SZPullToRefreshView : UIView
-
-@property (nonatomic, strong, readonly) UIActivityIndicatorView *activityIndicatorView;
 
 @property (nonatomic, readonly) SZPullToRefreshState state;
 @property (nonatomic, readonly) SZPullToRefreshPosition position;
