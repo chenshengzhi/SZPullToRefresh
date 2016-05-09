@@ -39,7 +39,10 @@
         });
     }];
     
-    [self.tableView addExternalTopInset:_inset.top + (_showNavigationBar?0:[UIApplication sharedApplication].statusBarFrame.size.height)];
+    [self.tableView setExternalTopInset:_inset.top + (_showNavigationBar?0:[UIApplication sharedApplication].statusBarFrame.size.height)];
+    
+    self.tableView.topRefreshView.tintColor = [UIColor colorWithRed:(arc4random()%255)/255.0 green:(arc4random()%255)/255.0 blue:(arc4random()%255)/255.0 alpha:1];
+    self.tableView.bottomRefreshView.tintColor = [UIColor colorWithRed:(arc4random()%255)/255.0 green:(arc4random()%255)/255.0 blue:(arc4random()%255)/255.0 alpha:1];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
