@@ -22,10 +22,10 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshPosition) {
 @property (nonatomic, strong) SZPullToRefreshView *topRefreshView;
 @property (nonatomic, strong) SZPullToRefreshView *bottomRefreshView;
 
+@property (nonatomic) UIEdgeInsets refreshViewInset;
+
 - (SZPullToRefreshView *)addTopRefreshWithActionHandler:(void (^)(void))actionHandler;
 - (SZPullToRefreshView *)addBottomRefreshWithActionHandler:(void (^)(void))actionHandler;
-
-- (void)setExternalTopInset:(CGFloat)externalTopInset;
 
 - (void)triggerTopPullToRefresh;
 - (void)triggerBottomPullToRefresh;

@@ -10,16 +10,12 @@
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 
-//fequal() and fequalzro() from http://stackoverflow.com/a/1614761/184130
-#define fequal(a,b) (fabs((a) - (b)) < FLT_EPSILON)
-#define fequalzero(a) (fabs(a) < FLT_EPSILON)
-
 //#define DebugSZPullToRefresh
 
 #ifdef DebugSZPullToRefresh
-#define CLog(fmt, ...) NSLog((@" %d %s " fmt), __LINE__, __PRETTY_FUNCTION__,  ##__VA_ARGS__)
+#define SZPullToRefreshLog(fmt, ...) NSLog((@" %d %s " fmt), __LINE__, __PRETTY_FUNCTION__,  ##__VA_ARGS__)
 #else
-#define CLog(fmt, ...) do{}while(0)
+#define SZPullToRefreshLog(fmt, ...) do{}while(0)
 #endif
 
 static CGFloat const SZPullToRefreshViewHeight = 80;
@@ -35,8 +31,6 @@ static CGFloat const SZPullToRefershAnimationDuration = 0.3;
 
 @property (nonatomic, readwrite) SZPullToRefreshState state;
 @property (nonatomic, readwrite) SZPullToRefreshPosition position;
-
-@property (nonatomic) CGFloat externalTopInset;
 
 @property (nonatomic, weak) UIScrollView *scrollView;
 
@@ -58,8 +52,9 @@ static CGFloat const SZPullToRefershAnimationDuration = 0.3;
 
 #pragma mark - UIScrollView (SZPullToRefresh) -
 
-static char SZScrollViewTopRefreshView;
-static char SZScrollViewBottomRefreshView;
+static char SZScrollViewTopRefreshViewKey;
+static char SZScrollViewBottomRefreshViewKey;
+static char SZScrollViewRefreshViewInsetKey;
 
 @implementation UIScrollView (SZPullToRefresh)
 
@@ -109,12 +104,6 @@ static char SZScrollViewBottomRefreshView;
     return [self addPullToRefreshWithActionHandler:actionHandler position:SZPullToRefreshPositionBottom];
 }
 
-- (void)setExternalTopInset:(CGFloat)externalTopInset {
-    if (self.topRefreshView) {
-        self.topRefreshView.externalTopInset = externalTopInset;
-    }
-}
-
 - (void)triggerTopPullToRefresh {
     self.topRefreshView.state = SZPullToRefreshStateTriggered;
     [self.topRefreshView startAnimating];
@@ -132,27 +121,42 @@ static char SZScrollViewBottomRefreshView;
 
 - (void)setTopRefreshView:(SZPullToRefreshView *)topRefreshView {
     [self willChangeValueForKey:@"topRefreshView"];
-    objc_setAssociatedObject(self, &SZScrollViewTopRefreshView,
+    objc_setAssociatedObject(self,
+                             &SZScrollViewTopRefreshViewKey,
                              topRefreshView,
                              OBJC_ASSOCIATION_RETAIN);
     [self didChangeValueForKey:@"topRefreshView"];
 }
 
 - (SZPullToRefreshView *)topRefreshView {
-    return objc_getAssociatedObject(self, &SZScrollViewTopRefreshView);
+    return objc_getAssociatedObject(self, &SZScrollViewTopRefreshViewKey);
 }
 
 
 - (void)setBottomRefreshView:(SZPullToRefreshView *)bottomRefreshView {
     [self willChangeValueForKey:@"bottomRefreshView"];
-    objc_setAssociatedObject(self, &SZScrollViewBottomRefreshView,
+    objc_setAssociatedObject(self,
+                             &SZScrollViewBottomRefreshViewKey,
                              bottomRefreshView,
                              OBJC_ASSOCIATION_RETAIN);
     [self didChangeValueForKey:@"bottomRefreshView"];
 }
 
 - (SZPullToRefreshView *)bottomRefreshView {
-    return objc_getAssociatedObject(self, &SZScrollViewBottomRefreshView);
+    return objc_getAssociatedObject(self, &SZScrollViewBottomRefreshViewKey);
+}
+
+- (void)setRefreshViewInset:(UIEdgeInsets)refreshViewInset {
+    [self willChangeValueForKey:@"refreshViewInset"];
+    objc_setAssociatedObject(self,
+                             &SZScrollViewRefreshViewInsetKey,
+                             [NSValue valueWithUIEdgeInsets:refreshViewInset],
+                             OBJC_ASSOCIATION_RETAIN);
+    [self didChangeValueForKey:@"refreshViewInset"];
+}
+
+- (UIEdgeInsets)refreshViewInset {
+    return [objc_getAssociatedObject(self, &SZScrollViewRefreshViewInsetKey) UIEdgeInsetsValue];
 }
 
 @end
@@ -208,7 +212,7 @@ static char SZScrollViewBottomRefreshView;
 }
 
 - (void)dealloc {
-    CLog(@"%@, position: %@", self.description, @(self.position));
+    SZPullToRefreshLog(@"%@, position: %@", self.description, @(self.position));
 }
 
 #pragma mark - Scroll View -
@@ -263,13 +267,13 @@ static char SZScrollViewBottomRefreshView;
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if([keyPath isEqualToString:@"contentOffset"]) {
-        CLog(@"+++ contentOffset = %@", [change valueForKey:NSKeyValueChangeNewKey]);
+        SZPullToRefreshLog(@"+++ contentOffset = %@", [change valueForKey:NSKeyValueChangeNewKey]);
         [self scrollViewDidScroll:[[change valueForKey:NSKeyValueChangeNewKey] CGPointValue].y];
     } else if([keyPath isEqualToString:@"contentSize"]) {
         
         [self layoutSelf];
     } else if ([keyPath isEqualToString:@"contentInset"]) {
-        CLog(@"*** contentInset = %@", [change valueForKey:NSKeyValueChangeNewKey]);
+        SZPullToRefreshLog(@"*** contentInset = %@", [change valueForKey:NSKeyValueChangeNewKey]);
         [self layoutSelf];
     }
 }
@@ -278,43 +282,70 @@ static char SZScrollViewBottomRefreshView;
     CGFloat scrollOffsetThreshold = 0;
     switch (self.position) {
         case SZPullToRefreshPositionTop:
-            scrollOffsetThreshold = (self.frame.origin.y
-                                     - (self.scrollView.contentInset.top - self.externalTopInset)
-                                     + (_insetForSelfAppended ? SZPullToRefreshViewHeight : 0));
+            scrollOffsetThreshold = (0
+                                     - self.scrollView.contentInset.top
+                                     - (_insetForSelfAppended ? 0 : SZPullToRefreshViewHeight));
             break;
-        case SZPullToRefreshPositionBottom:
-            scrollOffsetThreshold = (self.frame.origin.y
-                                     + SZPullToRefreshViewHeight
-                                     - self.scrollView.bounds.size.height);
+        case SZPullToRefreshPositionBottom: {
+            UIEdgeInsets scrollViewInsets = self.scrollView.contentInset;
+            if (self.scrollView.topRefreshView && self.scrollView.topRefreshView.insetForSelfAppended) {
+                scrollViewInsets.top -= SZPullToRefreshViewHeight;
+            }
+            if (_insetForSelfAppended) {
+                scrollViewInsets.bottom -= SZPullToRefreshViewHeight;
+            }
+            if (self.scrollView.contentSize.height + scrollViewInsets.top + scrollViewInsets.bottom < self.scrollView.bounds.size.height) {
+                scrollOffsetThreshold = 0 - scrollViewInsets.top + SZPullToRefreshViewHeight;
+            } else {
+                scrollOffsetThreshold = (self.scrollView.contentSize.height
+                                         + scrollViewInsets.bottom
+                                         + SZPullToRefreshViewHeight
+                                         - self.scrollView.bounds.size.height);
+            }
+            SZPullToRefreshLog(@"%f", scrollOffsetThreshold);
+            break;
+        }
+        default:
             break;
     }
-    
+
     if (self.state != SZPullToRefreshStateLoading) {
-        if(!self.scrollView.isDragging && self.state == SZPullToRefreshStateTriggered)
+        if (!self.scrollView.isDragging
+            && self.state == SZPullToRefreshStateTriggered) {
             self.state = SZPullToRefreshStateLoading;
-        else if(contentOffsetY < scrollOffsetThreshold && self.scrollView.isDragging && self.state == SZPullToRefreshStateStopped && self.position == SZPullToRefreshPositionTop)
+        } else if (contentOffsetY < scrollOffsetThreshold
+                   && self.scrollView.isDragging
+                   && self.state == SZPullToRefreshStateStopped
+                   && self.position == SZPullToRefreshPositionTop) {
             self.state = SZPullToRefreshStateTriggered;
-        else if(contentOffsetY >= scrollOffsetThreshold && self.state != SZPullToRefreshStateStopped && self.position == SZPullToRefreshPositionTop)
+        } else if (contentOffsetY >= scrollOffsetThreshold
+                   && self.state != SZPullToRefreshStateStopped
+                   && self.position == SZPullToRefreshPositionTop) {
             self.state = SZPullToRefreshStateStopped;
-        else if(contentOffsetY > scrollOffsetThreshold && self.scrollView.isDragging && self.state == SZPullToRefreshStateStopped && self.position == SZPullToRefreshPositionBottom)
+        } else if (contentOffsetY > scrollOffsetThreshold
+                   && self.scrollView.isDragging
+                   && self.state == SZPullToRefreshStateStopped
+                   && self.position == SZPullToRefreshPositionBottom) {
             self.state = SZPullToRefreshStateTriggered;
-        else if(contentOffsetY <= scrollOffsetThreshold && self.state != SZPullToRefreshStateStopped && self.position == SZPullToRefreshPositionBottom)
+        } else if (contentOffsetY <= scrollOffsetThreshold
+                   && self.state != SZPullToRefreshStateStopped
+                   && self.position == SZPullToRefreshPositionBottom) {
             self.state = SZPullToRefreshStateStopped;
+        }
     }
     
     if (self.scrollView.isDragging || self.scrollView.isDecelerating) {
         switch (self.position) {
             case SZPullToRefreshPositionTop: {
-                if (contentOffsetY < scrollOffsetThreshold + SZPullToRefreshViewHeight
+                if (contentOffsetY <= scrollOffsetThreshold + SZPullToRefreshViewHeight
                     && self.state != SZPullToRefreshStateLoading) {
                     CGFloat yOffset = contentOffsetY - (scrollOffsetThreshold + SZPullToRefreshViewHeight);
                     [self updateProgress:-yOffset/SZPullToRefreshViewHeight];
                 }
-                
                 break;
             }
             case SZPullToRefreshPositionBottom: {
-                if (contentOffsetY > scrollOffsetThreshold - SZPullToRefreshViewHeight
+                if (contentOffsetY >= scrollOffsetThreshold - SZPullToRefreshViewHeight
                     && self.state != SZPullToRefreshStateLoading) {
                     CGFloat yOffset = contentOffsetY - (scrollOffsetThreshold - SZPullToRefreshViewHeight);
                     [self updateProgress:yOffset/SZPullToRefreshViewHeight];
@@ -440,28 +471,32 @@ static char SZScrollViewBottomRefreshView;
 - (void)layoutSelf {
     CGFloat yOrigin = 0;
     switch (self.position) {
-        case SZPullToRefreshPositionTop:
-            yOrigin = -SZPullToRefreshViewHeight - self.externalTopInset;
+        case SZPullToRefreshPositionTop: {
+            yOrigin = -SZPullToRefreshViewHeight - self.scrollView.contentInset.top + self.scrollView.refreshViewInset.top;
+            if (_insetForSelfAppended) {
+                yOrigin += SZPullToRefreshViewHeight;
+            }
             break;
+        }
         case SZPullToRefreshPositionBottom: {
             UIEdgeInsets scrollViewInsets = self.scrollView.contentInset;
+            if (self.scrollView.topRefreshView && self.scrollView.topRefreshView.insetForSelfAppended) {
+                scrollViewInsets.top -= SZPullToRefreshViewHeight;
+            }
+            if (_insetForSelfAppended) {
+                scrollViewInsets.bottom -= SZPullToRefreshViewHeight;
+            }
             if (self.scrollView.contentSize.height + scrollViewInsets.top + scrollViewInsets.bottom < self.scrollView.bounds.size.height) {
-                yOrigin = self.scrollView.bounds.size.height - scrollViewInsets.top;
-                if (_insetForSelfAppended) {
-                    yOrigin -= SZPullToRefreshViewHeight;
-                }
+                yOrigin = self.scrollView.bounds.size.height - scrollViewInsets.top - self.scrollView.refreshViewInset.bottom;
             } else {
-                yOrigin = self.scrollView.contentSize.height + scrollViewInsets.bottom;
-                if (_insetForSelfAppended) {
-                    yOrigin -= SZPullToRefreshViewHeight;
-                }
+                yOrigin = self.scrollView.contentSize.height + scrollViewInsets.bottom - self.scrollView.refreshViewInset.bottom;
             }
             break;
         }
     }
     
     self.frame = CGRectMake(0, yOrigin, self.bounds.size.width, SZPullToRefreshViewHeight);
-    CLog(@"%@", NSStringFromCGRect(self.frame));
+    SZPullToRefreshLog(@"%@", NSStringFromCGRect(self.frame));
 }
 
 - (void)startAnimating {
@@ -500,18 +535,20 @@ static char SZScrollViewBottomRefreshView;
 }
 
 - (void)stopAnimating {
-    self.state = SZPullToRefreshStateStopped;
-    
-    if (!self.scrollView.isDragging) {
-        [self.activityIndicatorView stopAnimating];
-        self.progressLayer.hidden = NO;
-        self.progressLayer.strokeEnd = 0;
-        
-        CABasicAnimation *stopAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
-        stopAnimation.fromValue = @1;
-        stopAnimation.toValue = @0;
-        stopAnimation.duration = SZPullToRefershAnimationDuration;
-        [self.progressLayer addAnimation:stopAnimation forKey:nil];
+    if (self.state != SZPullToRefreshStateStopped) {
+        self.state = SZPullToRefreshStateStopped;
+
+        if (!self.scrollView.isDragging) {
+            [self.activityIndicatorView stopAnimating];
+            self.progressLayer.hidden = NO;
+            self.progressLayer.strokeEnd = 0;
+
+            CABasicAnimation *stopAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
+            stopAnimation.fromValue = @1;
+            stopAnimation.toValue = @0;
+            stopAnimation.duration = SZPullToRefershAnimationDuration;
+            [self.progressLayer addAnimation:stopAnimation forKey:nil];
+        }
     }
 }
 
