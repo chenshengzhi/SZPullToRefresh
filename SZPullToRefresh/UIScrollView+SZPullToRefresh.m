@@ -153,6 +153,13 @@ static char SZScrollViewRefreshViewInsetKey;
                              [NSValue valueWithUIEdgeInsets:refreshViewInset],
                              OBJC_ASSOCIATION_RETAIN);
     [self didChangeValueForKey:@"refreshViewInset"];
+
+    if (self.topRefreshView) {
+        [self.topRefreshView layoutSelf];
+    }
+    if (self.bottomRefreshView) {
+        [self.bottomRefreshView layoutSelf];
+    }
 }
 
 - (UIEdgeInsets)refreshViewInset {
