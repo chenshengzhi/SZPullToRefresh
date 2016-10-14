@@ -8,6 +8,7 @@
 
 #import "DetailTableViewController.h"
 #import "UIScrollView+SZPullToRefresh.h"
+#import "SZNormalPullToRefreshView.h"
 
 @interface DetailTableViewController ()
 
@@ -17,7 +18,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
+    if (arc4random_uniform(2) == 0) {
+        [self.tableView setCurrrentPullRefreshViewClass:[SZNormalPullToRefreshView class]];
+    }
+
     self.tableView.rowHeight = 60;
     
     self.tableView.contentInset = _inset;

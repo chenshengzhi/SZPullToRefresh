@@ -52,12 +52,25 @@ static Class SZDefaultPullRefreshViewClass;
 static char SZScrollViewTopRefreshViewKey;
 static char SZScrollViewBottomRefreshViewKey;
 static char SZScrollViewRefreshViewInsetKey;
+static char SZScrollViewCurrentPullRefreshViewClassKey;
 
 @implementation UIScrollView (SZPullToRefresh)
 
 + (void)setDefaultPullRefreshViewClass:(Class)pullRefreshViewClass {
     NSAssert([pullRefreshViewClass isSubclassOfClass:SZPullToRefreshView.class], @"pullRefreshViewClass should be subclass of SZPullToRefreshView");
     SZDefaultPullRefreshViewClass = pullRefreshViewClass;
+}
+
+- (void)setCurrrentPullRefreshViewClass:(Class)pullRefreshViewClass {
+    NSAssert([pullRefreshViewClass isSubclassOfClass:SZPullToRefreshView.class], @"pullRefreshViewClass should be subclass of SZPullToRefreshView");
+    objc_setAssociatedObject(self,
+                             &SZScrollViewCurrentPullRefreshViewClassKey,
+                             pullRefreshViewClass,
+                             OBJC_ASSOCIATION_RETAIN);
+}
+
+- (Class)currrentPullRefreshViewClass {
+    return objc_getAssociatedObject(self, &SZScrollViewCurrentPullRefreshViewClassKey);
 }
 
 - (SZPullToRefreshView *)addPullToRefreshWithActionHandler:(void (^)(void))actionHandler position:(SZPullToRefreshPosition)position {
@@ -79,7 +92,10 @@ static char SZScrollViewRefreshViewInsetKey;
         return nil;
     }
 
-    Class class = SZDefaultPullRefreshViewClass;
+    Class class = [self currrentPullRefreshViewClass];
+    if (!class) {
+        class = SZDefaultPullRefreshViewClass;
+    }
     if (!class) {
         class = [SZNormalPullToRefreshView class];
     }

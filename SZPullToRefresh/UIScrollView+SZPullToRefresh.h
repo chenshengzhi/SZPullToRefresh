@@ -54,6 +54,7 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshState) {
 @property (nonatomic) UIEdgeInsets refreshViewInset;
 
 + (void)setDefaultPullRefreshViewClass:(Class)pullRefreshViewClass;
+- (void)setCurrrentPullRefreshViewClass:(Class)pullRefreshViewClass;
 
 - (SZPullToRefreshView *)addTopRefreshWithActionHandler:(void (^)(void))actionHandler;
 - (SZPullToRefreshView *)addBottomRefreshWithActionHandler:(void (^)(void))actionHandler;
