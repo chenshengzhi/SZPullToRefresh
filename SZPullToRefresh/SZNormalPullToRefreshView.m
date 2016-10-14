@@ -11,6 +11,9 @@
 
 @interface SZNormalPullToRefreshView () <CAAnimationDelegate>
 
+@property (nonatomic, strong) UIActivityIndicatorView *activityIndicatorView;
+@property (nonatomic, strong) CAShapeLayer *progressLayer;
+
 @end
 
 @implementation SZNormalPullToRefreshView
@@ -46,6 +49,20 @@
     _progressLayer.strokeColor = tintColor.CGColor;
 }
 
+- (void)layoutSubviews {
+    [super layoutSubviews];
+
+    CGRect activityIndicatorFrame = self.activityIndicatorView.frame;
+    activityIndicatorFrame.origin.x = self.frame.size.width/2 - activityIndicatorFrame.size.width/2;
+    activityIndicatorFrame.origin.y = self.frame.size.height/2 - activityIndicatorFrame.size.height/2;
+    self.activityIndicatorView.frame = activityIndicatorFrame;
+
+    CGRect layerFrame = self.progressLayer.frame;
+    layerFrame.origin.x = self.frame.size.width/2 - layerFrame.size.width/2;
+    layerFrame.origin.y = self.frame.size.height/2 - layerFrame.size.height/2;
+    self.progressLayer.frame = layerFrame;
+}
+
 #pragma mark - SZPullToRefreshViewSubclassProtocol -
 - (void)startAnimatingWithDuration:(NSTimeInterval)duration {
     self.progressLayer.hidden = NO;
@@ -54,10 +71,14 @@
     startAnimation.fromValue = @0;
     startAnimation.toValue = @1;
     startAnimation.duration = duration;
-    startAnimation.delegate = self;
     [self.progressLayer addAnimation:startAnimation forKey:nil];
 
     [self.activityIndicatorView stopAnimating];
+}
+
+- (void)loadingAnimating {
+    self.progressLayer.hidden = YES;
+    [self.activityIndicatorView startAnimating];
 }
 
 - (void)stopAnimatingWithDuration:(NSTimeInterval)duration {
@@ -85,12 +106,6 @@
             self.progressLayer.hidden = NO;
         }
     }
-}
-
-#pragma mark - CAAnimationDelegate -
-- (void)animationDidStop:(CAAnimation *)anim finished:(BOOL)flag {
-    self.progressLayer.hidden = YES;
-    [self.activityIndicatorView startAnimating];
 }
 
 @end

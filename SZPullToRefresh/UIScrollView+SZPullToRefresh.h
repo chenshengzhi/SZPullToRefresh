@@ -24,6 +24,7 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshState) {
 
 - (void)startAnimatingWithDuration:(NSTimeInterval)duration;
 - (void)stopAnimatingWithDuration:(NSTimeInterval)duration;
+- (void)loadingAnimating;
 - (void)updateTriggerProgressForDragging:(CGFloat)progress;
 
 @end

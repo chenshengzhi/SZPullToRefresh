@@ -1,5 +1,5 @@
 //
-//  SZNormalPullToRefreshView.h
+//  DemoGiftPullRefreshView.h
 //  SZPullToRefreshDemo
 //
 //  Created by 陈圣治 on 2016/10/14.
@@ -8,6 +8,8 @@
 
 #import "UIScrollView+SZPullToRefresh.h"
 
-@interface SZNormalPullToRefreshView : SZPullToRefreshView
+@interface DemoGiftPullRefreshView : SZPullToRefreshView
+
+@property (nonatomic, strong) UIImageView *imageView;
 
 @end

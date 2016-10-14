@@ -9,6 +9,8 @@
 #import "ListViewController.h"
 #import "DataModel.h"
 #import "DetailTableViewController.h"
+#import "UIScrollView+SZPullToRefresh.h"
+#import "DemoGiftPullRefreshView.h"
 
 @interface ListViewController ()
 
@@ -20,6 +22,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    [UIScrollView setDefaultPullRefreshViewClass:[DemoGiftPullRefreshView class]];
     
     self.tableView.rowHeight = 60;
     

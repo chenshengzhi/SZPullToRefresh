@@ -26,9 +26,6 @@ static Class SZDefaultPullRefreshViewClass;
 
 @property (nonatomic, copy) void (^pullToRefreshActionHandler)(void);
 
-@property (nonatomic, strong) UIActivityIndicatorView *activityIndicatorView;
-@property (nonatomic, strong) CAShapeLayer *progressLayer;
-
 @property (nonatomic, readwrite) SZPullToRefreshState state;
 @property (nonatomic, readwrite) SZPullToRefreshPosition position;
 
@@ -194,25 +191,6 @@ static char SZScrollViewRefreshViewInsetKey;
     SZDefaultPullToRefershAnimationDuration = refreshViewAnimationDuration;
 }
 
-- (id)initWithFrame:(CGRect)frame {
-    if(self = [super initWithFrame:frame]) {
-        self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        self.tintColor = [UIColor grayColor];
-        
-        self.activityIndicatorView.color = self.tintColor;
-        self.state = SZPullToRefreshStateStopped;
-        
-        CGRect activityIndicatorFrame = self.activityIndicatorView.frame;
-        activityIndicatorFrame.origin.x = self.frame.size.width/2 - activityIndicatorFrame.size.width/2;
-        activityIndicatorFrame.origin.y = self.frame.size.height/2 - activityIndicatorFrame.size.height/2;
-        self.activityIndicatorView.frame = activityIndicatorFrame;
-        
-        [self progressLayer];
-    }
-    
-    return self;
-}
-
 - (void)willMoveToSuperview:(UIView *)newSuperview {
     if (self.superview && newSuperview == nil) {
         //use self.superview, not self.scrollView. Why self.scrollView == nil here?
@@ -227,20 +205,6 @@ static char SZScrollViewRefreshViewInsetKey;
             }
         }
     }
-}
-
-- (void)layoutSubviews {
-    [super layoutSubviews];
-
-    CGRect activityIndicatorFrame = self.activityIndicatorView.frame;
-    activityIndicatorFrame.origin.x = self.frame.size.width/2 - activityIndicatorFrame.size.width/2;
-    activityIndicatorFrame.origin.y = self.frame.size.height/2 - activityIndicatorFrame.size.height/2;
-    self.activityIndicatorView.frame = activityIndicatorFrame;
-    
-    CGRect layerFrame = self.progressLayer.frame;
-    layerFrame.origin.x = self.frame.size.width/2 - layerFrame.size.width/2;
-    layerFrame.origin.y = self.frame.size.height/2 - layerFrame.size.height/2;
-    self.progressLayer.frame = layerFrame;
 }
 
 - (void)dealloc {
@@ -292,7 +256,11 @@ static char SZScrollViewRefreshViewInsetKey;
                      animations:^{
                          self.scrollView.contentInset = contentInset;
                      }
-                     completion:NULL];
+                     completion:^(BOOL finished) {
+                         if (self.state == SZPullToRefreshStateLoading) {
+                             [self loadingAnimating];
+                         }
+                     }];
 }
 
 #pragma mark - Observing -
@@ -392,34 +360,6 @@ static char SZScrollViewRefreshViewInsetKey;
 
 #pragma mark - Getters -
 
-- (UIActivityIndicatorView *)activityIndicatorView {
-    if(!_activityIndicatorView) {
-        _activityIndicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
-        [self addSubview:_activityIndicatorView];
-    }
-    return _activityIndicatorView;
-}
-
-- (CAShapeLayer *)progressLayer {
-    if (!_progressLayer) {
-        _progressLayer = [CAShapeLayer layer];
-        CGFloat length = 26;
-        _progressLayer.frame = CGRectMake(0, 0, length, length);
-        UIBezierPath *bezier = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, length, length) cornerRadius:length/2];
-        _progressLayer.path = bezier.CGPath;
-        _progressLayer.strokeColor = self.tintColor.CGColor;
-        _progressLayer.fillColor = [UIColor clearColor].CGColor;
-        _progressLayer.lineCap = kCALineJoinRound;
-        _progressLayer.lineJoin = kCALineJoinRound;
-        _progressLayer.strokeStart = 0;
-        _progressLayer.strokeEnd = 0;
-        _progressLayer.lineWidth = 4;
-        _progressLayer.actions = @{@"strokeEnd": [NSNull null]};
-        [self.layer addSublayer:_progressLayer];
-    }
-    return _progressLayer;
-}
-
 - (BOOL)enableRefresh {
     return !self.hidden;
 }
@@ -474,13 +414,6 @@ static char SZScrollViewRefreshViewInsetKey;
             break;
         }
     }
-}
-
-- (void)setTintColor:(UIColor *)tintColor {
-    [super setTintColor:tintColor];
-    
-    _activityIndicatorView.color = tintColor;
-    _progressLayer.strokeColor = tintColor.CGColor;
 }
 
 #pragma mark - Add/Remove Observers -
@@ -549,6 +482,10 @@ static char SZScrollViewRefreshViewInsetKey;
 #pragma mark - SZPullToRefreshViewSubclassProtocol -
 
 - (void)startAnimatingWithDuration:(NSTimeInterval)duration {
+    NSAssert(NO, @"subclass should override this method for animation");
+}
+
+- (void)loadingAnimating {
     NSAssert(NO, @"subclass should override this method for animation");
 }
 
