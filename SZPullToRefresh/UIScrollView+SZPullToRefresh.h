@@ -7,15 +7,43 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <AvailabilityMacros.h>
-
-
-@class SZPullToRefreshView;
 
 typedef NS_ENUM(NSUInteger, SZPullToRefreshPosition) {
     SZPullToRefreshPositionTop = 0,
     SZPullToRefreshPositionBottom,
 };
+
+typedef NS_ENUM(NSUInteger, SZPullToRefreshState) {
+    SZPullToRefreshStateStopped = 0,
+    SZPullToRefreshStateTriggered,
+    SZPullToRefreshStateLoading,
+};
+
+
+@protocol SZPullToRefreshViewSubclassProtocol <NSObject>
+
+- (void)startAnimatingWithDuration:(NSTimeInterval)duration;
+- (void)stopAnimatingWithDuration:(NSTimeInterval)duration;
+- (void)updateTriggerProgressForDragging:(CGFloat)progress;
+
+@end
+
+
+@interface SZPullToRefreshView : UIView <SZPullToRefreshViewSubclassProtocol>
+
+@property (nonatomic, readonly) SZPullToRefreshState state;
+@property (nonatomic, readonly) SZPullToRefreshPosition position;
+
+@property (nonatomic) BOOL enableRefresh;
+
++ (CGFloat)defaultRefreshViewHeight;
++ (NSTimeInterval)defaultRefreshViewAnimationDuration;
+
++ (void)setDefaultRefreshViewHeight:(CGFloat)refreshViewHeight;
++ (void)setDefaultRefreshViewAnimationDuration:(NSTimeInterval)refreshViewAnimationDuration;
+
+@end
+
 
 @interface UIScrollView (SZPullToRefresh) <UIScrollViewDelegate>
 
@@ -23,6 +51,8 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshPosition) {
 @property (nonatomic, strong) SZPullToRefreshView *bottomRefreshView;
 
 @property (nonatomic) UIEdgeInsets refreshViewInset;
+
++ (void)setDefaultPullRefreshViewClass:(Class)pullRefreshViewClass;
 
 - (SZPullToRefreshView *)addTopRefreshWithActionHandler:(void (^)(void))actionHandler;
 - (SZPullToRefreshView *)addBottomRefreshWithActionHandler:(void (^)(void))actionHandler;
@@ -34,17 +64,3 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshPosition) {
 @end
 
 
-typedef NS_ENUM(NSUInteger, SZPullToRefreshState) {
-    SZPullToRefreshStateStopped = 0,
-    SZPullToRefreshStateTriggered,
-    SZPullToRefreshStateLoading,
-};
-
-@interface SZPullToRefreshView : UIView
-
-@property (nonatomic, readonly) SZPullToRefreshState state;
-@property (nonatomic, readonly) SZPullToRefreshPosition position;
-
-@property (nonatomic) BOOL enableRefresh;
-
-@end

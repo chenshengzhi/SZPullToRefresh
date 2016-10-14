@@ -7,7 +7,7 @@
 //
 
 #import "UIScrollView+SZPullToRefresh.h"
-#import <QuartzCore/QuartzCore.h>
+#import "SZNormalPullToRefreshView.h"
 #import <objc/runtime.h>
 
 //#define DebugSZPullToRefresh
@@ -18,9 +18,9 @@
 #define SZPullToRefreshLog(fmt, ...) do{}while(0)
 #endif
 
-static CGFloat const SZPullToRefreshViewHeight = 80;
-static CGFloat const SZPullToRefershAnimationDuration = 0.3;
-
+static CGFloat SZDefaultPullToRefreshViewHeight = 80;
+static CGFloat SZDefaultPullToRefershAnimationDuration = 0.3;
+static Class SZDefaultPullRefreshViewClass;
 
 @interface SZPullToRefreshView ()
 
@@ -43,8 +43,8 @@ static CGFloat const SZPullToRefershAnimationDuration = 0.3;
 
 - (void)layoutSelf;
 
-- (void)startAnimating;
-- (void)stopAnimating;
+- (void)triggerPullToRefresh;
+- (void)endPullToRefresh;
 
 @end
 
@@ -58,6 +58,11 @@ static char SZScrollViewRefreshViewInsetKey;
 
 @implementation UIScrollView (SZPullToRefresh)
 
++ (void)setDefaultPullRefreshViewClass:(Class)pullRefreshViewClass {
+    NSAssert([pullRefreshViewClass isSubclassOfClass:SZPullToRefreshView.class], @"pullRefreshViewClass should be subclass of SZPullToRefreshView");
+    SZDefaultPullRefreshViewClass = pullRefreshViewClass;
+}
+
 - (SZPullToRefreshView *)addPullToRefreshWithActionHandler:(void (^)(void))actionHandler position:(SZPullToRefreshPosition)position {
     CGFloat yOrigin = 0;
     
@@ -65,7 +70,7 @@ static char SZScrollViewRefreshViewInsetKey;
         if (self.topRefreshView) {
             return self.topRefreshView;
         } else {
-            yOrigin = -SZPullToRefreshViewHeight - self.contentInset.top;
+            yOrigin = -SZDefaultPullToRefreshViewHeight - self.contentInset.top;
         }
     } else if (position == SZPullToRefreshPositionBottom) {
         if (self.bottomRefreshView) {
@@ -76,8 +81,12 @@ static char SZScrollViewRefreshViewInsetKey;
     } else {
         return nil;
     }
-    
-    SZPullToRefreshView *view = [[SZPullToRefreshView alloc] initWithFrame:CGRectMake(0, yOrigin, self.bounds.size.width, SZPullToRefreshViewHeight)];
+
+    Class class = SZDefaultPullRefreshViewClass;
+    if (!class) {
+        class = [SZNormalPullToRefreshView class];
+    }
+    SZPullToRefreshView *view = [[class alloc] initWithFrame:CGRectMake(0, yOrigin, self.bounds.size.width, SZDefaultPullToRefreshViewHeight)];
     view.pullToRefreshActionHandler = actionHandler;
     view.scrollView = self;
     [self addSubview:view];
@@ -105,18 +114,16 @@ static char SZScrollViewRefreshViewInsetKey;
 }
 
 - (void)triggerTopPullToRefresh {
-    self.topRefreshView.state = SZPullToRefreshStateTriggered;
-    [self.topRefreshView startAnimating];
+    [self.topRefreshView triggerPullToRefresh];
 }
 
 - (void)triggerBottomPullToRefresh {
-    self.bottomRefreshView.state = SZPullToRefreshStateTriggered;
-    [self.bottomRefreshView startAnimating];
+    [self.bottomRefreshView triggerPullToRefresh];
 }
 
 - (void)endPullToRefresh {
-    [self.topRefreshView stopAnimating];
-    [self.bottomRefreshView stopAnimating];
+    [self.topRefreshView endPullToRefresh];
+    [self.bottomRefreshView endPullToRefresh];
 }
 
 - (void)setTopRefreshView:(SZPullToRefreshView *)topRefreshView {
@@ -171,6 +178,22 @@ static char SZScrollViewRefreshViewInsetKey;
 #pragma mark - SZPullToRefresh -
 @implementation SZPullToRefreshView
 
++ (CGFloat)defaultRefreshViewHeight {
+    return SZDefaultPullToRefreshViewHeight;
+}
+
++ (NSTimeInterval)defaultRefreshViewAnimationDuration {
+    return SZDefaultPullToRefershAnimationDuration;
+}
+
++ (void)setDefaultRefreshViewHeight:(CGFloat)refreshViewHeight {
+    SZDefaultPullToRefreshViewHeight = refreshViewHeight;
+}
+
++ (void)setDefaultRefreshViewAnimationDuration:(NSTimeInterval)refreshViewAnimationDuration{
+    SZDefaultPullToRefershAnimationDuration = refreshViewAnimationDuration;
+}
+
 - (id)initWithFrame:(CGRect)frame {
     if(self = [super initWithFrame:frame]) {
         self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -207,6 +230,8 @@ static char SZScrollViewRefreshViewInsetKey;
 }
 
 - (void)layoutSubviews {
+    [super layoutSubviews];
+
     CGRect activityIndicatorFrame = self.activityIndicatorView.frame;
     activityIndicatorFrame.origin.x = self.frame.size.width/2 - activityIndicatorFrame.size.width/2;
     activityIndicatorFrame.origin.y = self.frame.size.height/2 - activityIndicatorFrame.size.height/2;
@@ -232,7 +257,7 @@ static char SZScrollViewRefreshViewInsetKey;
     UIEdgeInsets currentInsets = self.scrollView.contentInset;
     switch (self.position) {
         case SZPullToRefreshPositionTop:
-            currentInsets.top -= SZPullToRefreshViewHeight;
+            currentInsets.top -= SZDefaultPullToRefreshViewHeight;
             break;
         case SZPullToRefreshPositionBottom:
             currentInsets.bottom = self.originBottomInset;
@@ -250,18 +275,18 @@ static char SZScrollViewRefreshViewInsetKey;
     UIEdgeInsets currentInsets = self.scrollView.contentInset;
     switch (self.position) {
         case SZPullToRefreshPositionTop:
-            currentInsets.top += SZPullToRefreshViewHeight;
+            currentInsets.top += SZDefaultPullToRefreshViewHeight;
             break;
         case SZPullToRefreshPositionBottom:
             self.originBottomInset = self.scrollView.contentInset.bottom;
-            currentInsets.bottom += SZPullToRefreshViewHeight - MIN(0, self.scrollView.contentSize.height + currentInsets.top + currentInsets.bottom - self.scrollView.bounds.size.height);
+            currentInsets.bottom += SZDefaultPullToRefreshViewHeight - MIN(0, self.scrollView.contentSize.height + currentInsets.top + currentInsets.bottom - self.scrollView.bounds.size.height);
             break;
     }
     [self animateScrollViewContentInset:currentInsets];
 }
 
 - (void)animateScrollViewContentInset:(UIEdgeInsets)contentInset {
-    [UIView animateWithDuration:SZPullToRefershAnimationDuration
+    [UIView animateWithDuration:SZDefaultPullToRefershAnimationDuration
                           delay:0
                         options:UIViewAnimationOptionCurveLinear|UIViewAnimationOptionBeginFromCurrentState
                      animations:^{
@@ -291,22 +316,22 @@ static char SZScrollViewRefreshViewInsetKey;
         case SZPullToRefreshPositionTop:
             scrollOffsetThreshold = (0
                                      - self.scrollView.contentInset.top
-                                     - (_insetForSelfAppended ? 0 : SZPullToRefreshViewHeight));
+                                     - (_insetForSelfAppended ? 0 : SZDefaultPullToRefreshViewHeight));
             break;
         case SZPullToRefreshPositionBottom: {
             UIEdgeInsets scrollViewInsets = self.scrollView.contentInset;
             if (self.scrollView.topRefreshView && self.scrollView.topRefreshView.insetForSelfAppended) {
-                scrollViewInsets.top -= SZPullToRefreshViewHeight;
+                scrollViewInsets.top -= SZDefaultPullToRefreshViewHeight;
             }
             if (_insetForSelfAppended) {
-                scrollViewInsets.bottom -= SZPullToRefreshViewHeight;
+                scrollViewInsets.bottom -= SZDefaultPullToRefreshViewHeight;
             }
             if (self.scrollView.contentSize.height + scrollViewInsets.top + scrollViewInsets.bottom < self.scrollView.bounds.size.height) {
-                scrollOffsetThreshold = 0 - scrollViewInsets.top + SZPullToRefreshViewHeight;
+                scrollOffsetThreshold = 0 - scrollViewInsets.top + SZDefaultPullToRefreshViewHeight;
             } else {
                 scrollOffsetThreshold = (self.scrollView.contentSize.height
                                          + scrollViewInsets.bottom
-                                         + SZPullToRefreshViewHeight
+                                         + SZDefaultPullToRefreshViewHeight
                                          - self.scrollView.bounds.size.height);
             }
             SZPullToRefreshLog(@"%f", scrollOffsetThreshold);
@@ -344,18 +369,18 @@ static char SZScrollViewRefreshViewInsetKey;
     if (self.scrollView.isDragging || self.scrollView.isDecelerating) {
         switch (self.position) {
             case SZPullToRefreshPositionTop: {
-                if (contentOffsetY <= scrollOffsetThreshold + SZPullToRefreshViewHeight
+                if (contentOffsetY <= scrollOffsetThreshold + SZDefaultPullToRefreshViewHeight
                     && self.state != SZPullToRefreshStateLoading) {
-                    CGFloat yOffset = contentOffsetY - (scrollOffsetThreshold + SZPullToRefreshViewHeight);
-                    [self updateProgress:-yOffset/SZPullToRefreshViewHeight];
+                    CGFloat yOffset = contentOffsetY - (scrollOffsetThreshold + SZDefaultPullToRefreshViewHeight);
+                    [self updateTriggerProgressForDragging:-yOffset/SZDefaultPullToRefreshViewHeight];
                 }
                 break;
             }
             case SZPullToRefreshPositionBottom: {
-                if (contentOffsetY >= scrollOffsetThreshold - SZPullToRefreshViewHeight
+                if (contentOffsetY >= scrollOffsetThreshold - SZDefaultPullToRefreshViewHeight
                     && self.state != SZPullToRefreshStateLoading) {
-                    CGFloat yOffset = contentOffsetY - (scrollOffsetThreshold - SZPullToRefreshViewHeight);
-                    [self updateProgress:yOffset/SZPullToRefreshViewHeight];
+                    CGFloat yOffset = contentOffsetY - (scrollOffsetThreshold - SZDefaultPullToRefreshViewHeight);
+                    [self updateTriggerProgressForDragging:yOffset/SZDefaultPullToRefreshViewHeight];
                 }
                 break;
             }
@@ -429,10 +454,15 @@ static char SZScrollViewRefreshViewInsetKey;
     switch (newState) {
         case SZPullToRefreshStateStopped: {
             [self resetScrollViewContentInset];
-            [self stopAnimating];
+            if (!self.scrollView.dragging && !self.scrollView.decelerating) {
+                [self stopAnimatingWithDuration:SZDefaultPullToRefershAnimationDuration];
+            }
             break;
         }
         case SZPullToRefreshStateTriggered:
+            if (!self.scrollView.dragging && !self.scrollView.decelerating) {
+                [self startAnimatingWithDuration:SZDefaultPullToRefershAnimationDuration];
+            }
             break;
             
         case SZPullToRefreshStateLoading: {
@@ -473,25 +503,35 @@ static char SZScrollViewRefreshViewInsetKey;
     }
 }
 
-#pragma mark - other -
+#pragma mark - Start/End Refresh -
+- (void)triggerPullToRefresh {
+    self.state = SZPullToRefreshStateTriggered;
+    self.state = SZPullToRefreshStateLoading;
+}
+
+- (void)endPullToRefresh {
+    self.state = SZPullToRefreshStateStopped;
+}
+
+#pragma mark - layout -
 
 - (void)layoutSelf {
     CGFloat yOrigin = 0;
     switch (self.position) {
         case SZPullToRefreshPositionTop: {
-            yOrigin = -SZPullToRefreshViewHeight - self.scrollView.contentInset.top + self.scrollView.refreshViewInset.top;
+            yOrigin = -SZDefaultPullToRefreshViewHeight - self.scrollView.contentInset.top + self.scrollView.refreshViewInset.top;
             if (_insetForSelfAppended) {
-                yOrigin += SZPullToRefreshViewHeight;
+                yOrigin += SZDefaultPullToRefreshViewHeight;
             }
             break;
         }
         case SZPullToRefreshPositionBottom: {
             UIEdgeInsets scrollViewInsets = self.scrollView.contentInset;
             if (self.scrollView.topRefreshView && self.scrollView.topRefreshView.insetForSelfAppended) {
-                scrollViewInsets.top -= SZPullToRefreshViewHeight;
+                scrollViewInsets.top -= SZDefaultPullToRefreshViewHeight;
             }
             if (_insetForSelfAppended) {
-                scrollViewInsets.bottom -= SZPullToRefreshViewHeight;
+                scrollViewInsets.bottom -= SZDefaultPullToRefreshViewHeight;
             }
             if (self.scrollView.contentSize.height + scrollViewInsets.top + scrollViewInsets.bottom < self.scrollView.bounds.size.height) {
                 yOrigin = self.scrollView.bounds.size.height - scrollViewInsets.top - self.scrollView.refreshViewInset.bottom;
@@ -502,76 +542,22 @@ static char SZScrollViewRefreshViewInsetKey;
         }
     }
     
-    self.frame = CGRectMake(0, yOrigin, self.bounds.size.width, SZPullToRefreshViewHeight);
+    self.frame = CGRectMake(0, yOrigin, self.bounds.size.width, SZDefaultPullToRefreshViewHeight);
     SZPullToRefreshLog(@"%@", NSStringFromCGRect(self.frame));
 }
 
-- (void)startAnimating {
-    self.progressLayer.hidden = NO;
-    self.progressLayer.strokeEnd = 1;
-    CABasicAnimation *stopAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
-    stopAnimation.fromValue = @0;
-    stopAnimation.toValue = @1;
-    stopAnimation.duration = SZPullToRefershAnimationDuration;
-    [self.progressLayer addAnimation:stopAnimation forKey:nil];
-    
-    [self.activityIndicatorView stopAnimating];
-    
-    [UIView animateWithDuration:SZPullToRefershAnimationDuration
-                          delay:0
-                        options:UIViewAnimationOptionCurveLinear
-                     animations:^{
-                         switch (self.position) {
-                             case SZPullToRefreshPositionTop: {
-                                 self.scrollView.contentOffset = CGPointMake(self.scrollView.contentOffset.x, -self.scrollView.contentInset.top-SZPullToRefreshViewHeight);
-                                 break;
-                             }
-                             case SZPullToRefreshPositionBottom: {
-                                 self.scrollView.contentOffset = CGPointMake(self.scrollView.contentOffset.x, CGRectGetMaxY(self.frame));
-                                 break;
-                             }
-                         }
-                     } completion:^(BOOL finished) {
-                         self.progressLayer.hidden = YES;
-                         [self.activityIndicatorView startAnimating];
-                     }];
-    
-    
-    
-    self.state = SZPullToRefreshStateLoading;
+#pragma mark - SZPullToRefreshViewSubclassProtocol -
+
+- (void)startAnimatingWithDuration:(NSTimeInterval)duration {
+    NSAssert(NO, @"subclass should override this method for animation");
 }
 
-- (void)stopAnimating {
-    if (self.state != SZPullToRefreshStateStopped) {
-        self.state = SZPullToRefreshStateStopped;
-
-        if (!self.scrollView.isDragging) {
-            [self.activityIndicatorView stopAnimating];
-            self.progressLayer.hidden = NO;
-            self.progressLayer.strokeEnd = 0;
-
-            CABasicAnimation *stopAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
-            stopAnimation.fromValue = @1;
-            stopAnimation.toValue = @0;
-            stopAnimation.duration = SZPullToRefershAnimationDuration;
-            [self.progressLayer addAnimation:stopAnimation forKey:nil];
-        }
-    }
+- (void)stopAnimatingWithDuration:(NSTimeInterval)duration {
+    NSAssert(NO, @"subclass should override this method for animation");
 }
 
-- (void)updateProgress:(CGFloat)progress {
-    progress = MIN(progress, 1);
-    self.progressLayer.strokeEnd = progress;
-
-    if (self.state != SZPullToRefreshStateLoading) {
-        if (progress >= 1) {
-            [self.activityIndicatorView startAnimating];
-            self.progressLayer.hidden = YES;
-        } else {
-            [self.activityIndicatorView stopAnimating];
-            self.progressLayer.hidden = NO;
-        }
-    }
+- (void)updateTriggerProgressForDragging:(CGFloat)progress {
+    NSAssert(NO, @"subclass should override this method for animation");
 }
 
 @end

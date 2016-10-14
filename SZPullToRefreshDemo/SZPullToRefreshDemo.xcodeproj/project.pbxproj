@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2433CF571DB079BF00D4154C /* SZNormalPullToRefreshView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2433CF561DB079BF00D4154C /* SZNormalPullToRefreshView.m */; };
 		244054D31CE01FE6005DA3DB /* UIScrollView+SZPullToRefresh.m in Sources */ = {isa = PBXBuildFile; fileRef = 244054D21CE01FE6005DA3DB /* UIScrollView+SZPullToRefresh.m */; };
 		C3E204991CDDD41E00439E59 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C3E204981CDDD41E00439E59 /* main.m */; };
 		C3E2049C1CDDD41E00439E59 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = C3E2049B1CDDD41E00439E59 /* AppDelegate.m */; };
@@ -38,6 +39,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2433CF551DB079BF00D4154C /* SZNormalPullToRefreshView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SZNormalPullToRefreshView.h; sourceTree = "<group>"; };
+		2433CF561DB079BF00D4154C /* SZNormalPullToRefreshView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SZNormalPullToRefreshView.m; sourceTree = "<group>"; };
 		244054D11CE01FE6005DA3DB /* UIScrollView+SZPullToRefresh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIScrollView+SZPullToRefresh.h"; sourceTree = "<group>"; };
 		244054D21CE01FE6005DA3DB /* UIScrollView+SZPullToRefresh.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIScrollView+SZPullToRefresh.m"; sourceTree = "<group>"; };
 		C3E204941CDDD41E00439E59 /* SZPullToRefreshDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SZPullToRefreshDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -92,6 +95,8 @@
 			children = (
 				244054D11CE01FE6005DA3DB /* UIScrollView+SZPullToRefresh.h */,
 				244054D21CE01FE6005DA3DB /* UIScrollView+SZPullToRefresh.m */,
+				2433CF551DB079BF00D4154C /* SZNormalPullToRefreshView.h */,
+				2433CF561DB079BF00D4154C /* SZNormalPullToRefreshView.m */,
 			);
 			name = SZPullToRefresh;
 			path = ../SZPullToRefresh;
@@ -226,7 +231,7 @@
 		C3E2048C1CDDD41E00439E59 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0730;
+				LastUpgradeCheck = 0800;
 				ORGANIZATIONNAME = shengzhichen;
 				TargetAttributes = {
 					C3E204931CDDD41E00439E59 = {
@@ -297,6 +302,7 @@
 				C3E204DA1CDDD4C100439E59 /* ListViewController.m in Sources */,
 				C3E204D91CDDD4C100439E59 /* DetailTableViewController.m in Sources */,
 				C3E204D81CDDD4C100439E59 /* DataModel.m in Sources */,
+				2433CF571DB079BF00D4154C /* SZNormalPullToRefreshView.m in Sources */,
 				C3E2049C1CDDD41E00439E59 /* AppDelegate.m in Sources */,
 				244054D31CE01FE6005DA3DB /* UIScrollView+SZPullToRefresh.m in Sources */,
 				C3E204991CDDD41E00439E59 /* main.m in Sources */,
@@ -368,8 +374,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -412,8 +420,10 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
