@@ -27,7 +27,10 @@
 - (void)layoutSubviews {
     [super layoutSubviews];
 
-    _imageView.center = CGPointMake(self.frame.size.width/2, self.frame.size.height/2);
+    CGRect frame = _imageView.frame;
+    frame.origin.x = ceil(self.frame.size.width/2 - frame.size.width/2);
+    frame.origin.y = ceil(self.frame.size.height/2 - frame.size.height/2);
+    _imageView.frame = frame;
 }
 
 #pragma mark - SZPullToRefreshViewSubclassProtocol -
