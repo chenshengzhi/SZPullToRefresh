@@ -64,7 +64,7 @@
 }
 
 #pragma mark - SZPullToRefreshViewSubclassProtocol -
-- (void)startAnimatingWithDuration:(NSTimeInterval)duration {
+- (void)refreshViewOpenAnimatingWithDuration:(NSTimeInterval)duration {
     self.progressLayer.hidden = NO;
     self.progressLayer.strokeEnd = 1;
     CABasicAnimation *startAnimation = [CABasicAnimation animationWithKeyPath:@"strokeEnd"];
@@ -76,13 +76,16 @@
     [self.activityIndicatorView stopAnimating];
 }
 
-- (void)loadingAnimating {
+- (void)refreshViewLoadingAnimating {
     self.progressLayer.hidden = YES;
     [self.activityIndicatorView startAnimating];
 }
 
-- (void)stopAnimatingWithDuration:(NSTimeInterval)duration {
+- (void)refreshViewLloadingEnd {
     [self.activityIndicatorView stopAnimating];
+}
+
+- (void)refreshViewCloseAnimatingWithDuration:(NSTimeInterval)duration {
     self.progressLayer.hidden = NO;
     self.progressLayer.strokeEnd = 0;
 
@@ -93,7 +96,7 @@
     [self.progressLayer addAnimation:stopAnimation forKey:nil];
 }
 
-- (void)updateTriggerProgressForDragging:(CGFloat)progress {
+- (void)refreshViewUpdateTriggerProgressForDragging:(CGFloat)progress {
     progress = MIN(progress, 1);
     self.progressLayer.strokeEnd = progress;
 

@@ -35,7 +35,7 @@
 
 #pragma mark - SZPullToRefreshViewSubclassProtocol -
 
-- (void)startAnimatingWithDuration:(NSTimeInterval)duration {
+- (void)openAnimatingWithDuration:(NSTimeInterval)duration {
     [UIView animateWithDuration:duration delay:0 options:UIViewAnimationOptionCurveLinear animations:^{
         _imageView.alpha = 1;
     } completion:nil];
@@ -45,9 +45,11 @@
     [_imageView startAnimating];
 }
 
-- (void)stopAnimatingWithDuration:(NSTimeInterval)duration {
+- (void)loadingEnd {
     [_imageView stopAnimating];
+}
 
+- (void)closeAnimatingWithDuration:(NSTimeInterval)duration {
     [UIView animateWithDuration:duration delay:0 options:UIViewAnimationOptionCurveLinear animations:^{
         _imageView.alpha = 0;
     } completion:nil];

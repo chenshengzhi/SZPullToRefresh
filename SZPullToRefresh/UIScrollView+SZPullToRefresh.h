@@ -22,10 +22,15 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshState) {
 
 @protocol SZPullToRefreshViewSubclassProtocol <NSObject>
 
-- (void)startAnimatingWithDuration:(NSTimeInterval)duration;
-- (void)stopAnimatingWithDuration:(NSTimeInterval)duration;
-- (void)loadingAnimating;
-- (void)updateTriggerProgressForDragging:(CGFloat)progress;
+- (void)refreshViewOpenAnimatingWithDuration:(NSTimeInterval)duration;
+- (void)refreshViewCloseAnimatingWithDuration:(NSTimeInterval)duration;
+- (void)refreshViewLoadingAnimating;
+- (void)refreshViewLloadingEnd;
+- (void)refreshViewUpdateTriggerProgressForDragging:(CGFloat)progress;
+
+@optional
+- (CGFloat)currentRefreshViewHeight;
+- (NSTimeInterval)currentRefreshViewAnimationDuration;
 
 @end
 
@@ -36,12 +41,6 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshState) {
 @property (nonatomic, readonly) SZPullToRefreshPosition position;
 
 @property (nonatomic) BOOL enableRefresh;
-
-+ (CGFloat)defaultRefreshViewHeight;
-+ (NSTimeInterval)defaultRefreshViewAnimationDuration;
-
-+ (void)setDefaultRefreshViewHeight:(CGFloat)refreshViewHeight;
-+ (void)setDefaultRefreshViewAnimationDuration:(NSTimeInterval)refreshViewAnimationDuration;
 
 @end
 
@@ -55,6 +54,9 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshState) {
 
 + (void)setDefaultPullRefreshViewClass:(Class)pullRefreshViewClass;
 - (void)setCurrrentPullRefreshViewClass:(Class)pullRefreshViewClass;
+
++ (void)setDefaultRefreshViewHeight:(CGFloat)refreshViewHeight;
++ (void)setDefaultRefreshViewAnimationDuration:(NSTimeInterval)refreshViewAnimationDuration;
 
 - (SZPullToRefreshView *)addTopRefreshWithActionHandler:(void (^)(void))actionHandler;
 - (SZPullToRefreshView *)addBottomRefreshWithActionHandler:(void (^)(void))actionHandler;
