@@ -35,27 +35,27 @@
 
 #pragma mark - SZPullToRefreshViewSubclassProtocol -
 
-- (void)openAnimatingWithDuration:(NSTimeInterval)duration {
+- (void)refreshViewOpenAnimatingWithDuration:(NSTimeInterval)duration {
     [UIView animateWithDuration:duration delay:0 options:UIViewAnimationOptionCurveLinear animations:^{
         _imageView.alpha = 1;
     } completion:nil];
 }
 
-- (void)loadingAnimating {
+- (void)refreshViewLoadingAnimating {
     [_imageView startAnimating];
 }
 
-- (void)loadingEnd {
+- (void)refreshViewLloadingEnd {
     [_imageView stopAnimating];
 }
 
-- (void)closeAnimatingWithDuration:(NSTimeInterval)duration {
+- (void)refreshViewCloseAnimatingWithDuration:(NSTimeInterval)duration {
     [UIView animateWithDuration:duration delay:0 options:UIViewAnimationOptionCurveLinear animations:^{
         _imageView.alpha = 0;
     } completion:nil];
 }
 
-- (void)updateTriggerProgressForDragging:(CGFloat)progress {
+- (void)refreshViewUpdateTriggerProgressForDragging:(CGFloat)progress {
     if (progress >= 1.0) {
         [_imageView startAnimating];
     } else {
