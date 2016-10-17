@@ -47,8 +47,8 @@ typedef NS_ENUM(NSUInteger, SZPullToRefreshState) {
 
 @interface UIScrollView (SZPullToRefresh) <UIScrollViewDelegate>
 
-@property (nonatomic, strong) SZPullToRefreshView *topRefreshView;
-@property (nonatomic, strong) SZPullToRefreshView *bottomRefreshView;
+@property (nonatomic, strong) __kindof SZPullToRefreshView *topRefreshView;
+@property (nonatomic, strong) __kindof SZPullToRefreshView *bottomRefreshView;
 
 @property (nonatomic) UIEdgeInsets refreshViewInset;
 

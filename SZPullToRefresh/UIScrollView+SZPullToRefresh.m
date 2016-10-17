@@ -507,7 +507,7 @@ static char SZScrollViewCurrentPullRefreshViewClassKey;
         }
     }
     
-    self.frame = CGRectMake(0, yOrigin, self.bounds.size.width, [self refreshViewHeight]);
+    self.frame = CGRectMake(0, yOrigin, self.scrollView.bounds.size.width, [self refreshViewHeight]);
     SZPullToRefreshLog(@"%@", NSStringFromCGRect(self.frame));
 }
 
